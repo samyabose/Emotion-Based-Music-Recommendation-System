@@ -345,8 +345,8 @@ with tab2:
                 img = img_container["img"]
             if img is None:
                 continue
-            cv2.imwrite('./data/video_based/input.png', img)
-            break
+            # cv2.imwrite('./data/video_based/input.png', img)
+            # break
 
         if cap:
             try:
@@ -372,8 +372,14 @@ with tab2:
                         container(genreBasedAlbums(moodToGenre[emotion_prediction], 3), 'https://open.spotify.com/embed/album/')
                         st.write('Recommended Artists')
                         container(genreBasedArtists(moodToGenre[emotion_prediction], 3), 'https://open.spotify.com/embed/artist/') 
-            except:
-                pass
+            except:  
+                with placeholder.container():
+                    st.write('Recommended Tracks')
+                    container(genreBasedTracks(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/track/')
+                    st.write('Recommended Albums')
+                    container(genreBasedAlbums(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/album/')
+                    st.write('Recommended Artists')
+                    container(genreBasedArtists(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/artist/') 
         
 with tab3:  
     st.subheader('Audio Based Recommendation') 

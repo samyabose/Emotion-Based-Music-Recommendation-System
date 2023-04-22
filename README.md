@@ -6,6 +6,8 @@
 
 This projects uses Spotify and Genius to recommend music along with Spotify widget. It contains emotion based models trained on texts, videos and audios to provided recommendation via those media.
 
+> Also checkout the [Streamlit App](https://samya-ravenxi-emotion-based-music-recommendation-sy-home-bx6kzw.streamlit.app/)
+
 <br>
 <br>
 
