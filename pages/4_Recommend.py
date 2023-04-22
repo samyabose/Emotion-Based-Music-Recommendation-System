@@ -267,7 +267,8 @@ with tab1:
     text_based = load_model('./data/text_based/text_based.h5', compile=False)
     text_based.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
 
-    API_KEY = st.secrets["API_KEY"]
+    # API_KEY = st.secrets["API_KEY"]
+    API_KEY = "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"
 
     API_URL = "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill"
     headers = {"Authorization": "Bearer {}".format(API_KEY)}
