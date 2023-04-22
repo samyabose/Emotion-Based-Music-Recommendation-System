@@ -6,8 +6,9 @@ plotly
 librosa
 soundfile
 streamlit
-tensorflow==2.10.0
 scikit-learn
+opencv-python
 streamlit-chat
 ydata_profiling
+tensorflow==2.10.0
 streamlit_pandas_profiling
