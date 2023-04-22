@@ -1,0 +1,60 @@
+*{
+    margin: 0;
+    padding: 0;
+}
+
+.container{
+    margin: 0 auto;
+    text-align: center;
+}
+
+.display{
+    width: 100%;
+    padding: 5px 0;
+    margin: 15px 0;
+}
+
+.controllers{
+    width: 100%;
+    padding: 5em 0;
+    margin-top: 1em;
+    margin-bottom: 35px;
+}
+
+#spacer {
+    padding: 0.25em 0;
+}
+
+button{
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+    padding-right: 1.15rem;
+    padding-left: 1.15rem;
+    margin-right: 1rem;
+    margin-left: 0.1rem;
+    font-size: 16px;
+    background-color: rgba(49, 51, 63, 0);
+    color: #fff;
+    border: 0.1px solid rgba(228, 228, 228, 0.559);
+    border-radius: 0.25rem;
+    margin-top: 0.75rem;
+    margin-bottom: 0.25rem;
+}
+
+button:hover{
+    background-color: #ff4c4b;
+    color: #fff;
+    border: none;
+    box-shadow: rgba(255, 75, 75, 0.5) 0px 0px 0px 0.2rem;
+}
+
+button:focus{
+    background-color: rgba(49, 51, 63, 0);
+    color: #ff4c4b;
+    border: 0.1px solid #ff4b4b98;
+}
+
+audio {
+    width: 330px;
+    height: 45px;
+}
