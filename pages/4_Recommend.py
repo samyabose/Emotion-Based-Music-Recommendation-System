@@ -1,4 +1,5 @@
 import re
+import av
 import io
 import os
 import cv2
@@ -6,6 +7,7 @@ import nltk
 import pickle
 import librosa
 import requests
+import threading
 import numpy as np
 import pandas as pd
 from io import BytesIO
@@ -13,6 +15,7 @@ import streamlit as st
 import soundfile as sf
 from nltk.corpus import stopwords
 from streamlit_chat import message
+from streamlit_webrtc import webrtc_streamer
 import streamlit.components.v1 as components
 
 from sklearn.neural_network import MLPClassifier
@@ -185,6 +188,13 @@ nltk.download('wordnet')
 nltk.download('stopwords')
 stop_words = set(stopwords.words("english"))
 
+def video_frame_callback(frame):
+    img = frame.to_ndarray(format="bgr24")
+    with lock:
+        img_container["img"] = img
+    return frame
+
+
 with tab1:
     st.subheader('Text Based Recommendation') 
     def lemmatization(text):
@@ -318,42 +328,43 @@ with tab1:
 with tab2:
     st.subheader('Video Based Recommendation') 
     col1, col2 = st.columns((1.5,2.5))
-    with col1: 
-        col3, col4 = st.columns((1.8,2))
-        with col4:
-            button = st.button('Get Recommendation')
-        with col3:
-            run = st.checkbox('Run')
-        FRAME_WINDOW = st.image([])
-        cap = cv2.VideoCapture(0)
-        if not cap.isOpened():
-            print("Cannot access camera.")
-            exit()
     with col2:
         placeholder = st.empty()
         with placeholder.container():
-            st.write('Recommended Tracks')
-            container(genreBasedTracks(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/track/')
-            st.write('Recommended Albums')
-            container(genreBasedAlbums(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/album/')
-            st.write('Recommended Artists')
-            container(genreBasedArtists(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/artist/') 
+            st.caption("Press 'Start' to record a small video, before clicking on 'Generate Recommendations'")
+            # st.write('Recommended Tracks')
+            # container(genreBasedTracks(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/track/')
+            # st.write('Recommended Albums')
+            # container(genreBasedAlbums(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/album/')
+            # st.write('Recommended Artists')
+            # container(genreBasedArtists(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/artist/') 
+            
+    with col1: 
+        lock = threading.Lock()
+        img_container = {"img": None}
+        ctx = webrtc_streamer(key="example", video_frame_callback=video_frame_callback)
+        cap = st.button('Generate Recommendation', use_container_width=True)
 
-    while run:
-        res,frame=cap.read()
-        image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        FRAME_WINDOW.image(image)
-        height, width , channel = frame.shape
-        gray_image= cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces = face_haar_cascade.detectMultiScale(gray_image)
-        try:
-            for (x,y, w, h) in faces:
-                roi_gray = gray_image[y-5:y+h+5,x-5:x+w+5]
-                roi_gray=cv2.resize(roi_gray,(48,48))
-                image_pixels = img_to_array(roi_gray)
-                image_pixels = np.expand_dims(image_pixels, axis = 0)
-                image_pixels /= 255
-                if button:
+        while ctx.state.playing:
+            with lock:
+                img = img_container["img"]
+            if img is None:
+                continue
+            cv2.imwrite('./data/video_based/input.png', img)
+            break
+
+        if cap:
+            try:
+                img = cv2.imread('./data/video_based/input.png')
+                height, width , channel = img.shape
+                gray_image= cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                faces = face_haar_cascade.detectMultiScale(gray_image)
+                for (x,y, w, h) in faces:
+                    roi_gray = gray_image[y-5:y+h+5,x-5:x+w+5]
+                    roi_gray=cv2.resize(roi_gray,(48,48))
+                    image_pixels = img_to_array(roi_gray)
+                    image_pixels = np.expand_dims(image_pixels, axis = 0)
+                    image_pixels /= 255
                     predictions = model.predict(image_pixels)
                     max_index = np.argmax(predictions[0])
                     emotion_detection = ('angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral')
@@ -366,8 +377,8 @@ with tab2:
                         container(genreBasedAlbums(moodToGenre[emotion_prediction], 3), 'https://open.spotify.com/embed/album/')
                         st.write('Recommended Artists')
                         container(genreBasedArtists(moodToGenre[emotion_prediction], 3), 'https://open.spotify.com/embed/artist/') 
-        except:
-            pass
+            except:
+                pass
         
 with tab3:  
     st.subheader('Audio Based Recommendation') 
