@@ -5,7 +5,6 @@ import cv2
 import nltk
 import pickle
 import librosa
-import keyboard
 import requests
 import numpy as np
 import pandas as pd
@@ -320,8 +319,11 @@ with tab2:
     st.subheader('Video Based Recommendation') 
     col1, col2 = st.columns((1.5,2.5))
     with col1: 
-        st.error("Press 'l' to receive recommendations.")
-        run = st.checkbox('Run')
+        col3, col4 = st.columns((1.8,2))
+        with col4:
+            button = st.button('Get Recommendation')
+        with col3:
+            run = st.checkbox('Run')
         FRAME_WINDOW = st.image([])
         cap = cv2.VideoCapture(0)
         if not cap.isOpened():
@@ -351,7 +353,7 @@ with tab2:
                 image_pixels = img_to_array(roi_gray)
                 image_pixels = np.expand_dims(image_pixels, axis = 0)
                 image_pixels /= 255
-                if keyboard.is_pressed('l'):
+                if button:
                     predictions = model.predict(image_pixels)
                     max_index = np.argmax(predictions[0])
                     emotion_detection = ('angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral')

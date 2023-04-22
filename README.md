@@ -8,15 +8,12 @@ This projects uses Spotify and Genius to recommend music along with Spotify widg
 
 <br>
 <br>
-<br>
 
-
-
-> For detailed guides, steps and instructions, check out: [Colab Notebook](https://colab.research.google.com/drive/1ahxyp8i9Ngy2nyA5THSOwDzVS99prLMF?usp=sharing)
+> **Warning:**
+> Modify the secrets.toml file to store the [API Key](https://huggingface.co/facebook/blenderbot-400M-distill?text=Hi.)
 
 <br>
 <br>
-
 
 This streamlit app contains the following sections:
 * &#128393; Explore: This sections lets the user explore all the dataframes required for the webapp.
@@ -58,8 +55,7 @@ This streamlit app contains the following sections:
 <br>
 <br>
 
-> **Warning**
-> modify the env.config file to store the [API Key](https://huggingface.co/facebook/blenderbot-400M-distill?text=Hi.)
+> For detailed guides, steps and instructions, check out: [Colab Notebook](https://colab.research.google.com/drive/1ahxyp8i9Ngy2nyA5THSOwDzVS99prLMF?usp=sharing)
 
 <br>
 <br>
