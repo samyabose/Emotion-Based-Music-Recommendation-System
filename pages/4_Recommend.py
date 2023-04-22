@@ -181,8 +181,8 @@ def extract_feature(file_name, mfcc, chroma, mel):
         result=np.hstack((result, mel))
   return result
 
-# nltk.download('wordnet')
-# nltk.download('stopwords')
+nltk.download('wordnet')
+nltk.download('stopwords')
 stop_words = set(stopwords.words("english"))
 
 with tab1:
