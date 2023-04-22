@@ -345,8 +345,8 @@ with tab2:
                 img = img_container["img"]
             if img is None:
                 continue
-            # cv2.imwrite('./data/video_based/input.png', img)
-            # break
+            cv2.imwrite('./data/video_based/input.png', img)
+            break
 
         if cap:
             try:
