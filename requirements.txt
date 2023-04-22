@@ -1,0 +1,14 @@
+nltk
+numpy
+keras
+pandas
+plotly
+librosa
+soundfile
+streamlit
+scikit-learn
+streamlit-chat
+ydata_profiling
+tensorflow==2.10.0
+opencv-python-headless
+streamlit_pandas_profiling
