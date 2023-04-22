@@ -188,6 +188,9 @@ nltk.download('wordnet')
 nltk.download('stopwords')
 stop_words = set(stopwords.words("english"))
 
+lock = threading.Lock()
+img_container = {"img": None}
+
 def video_frame_callback(frame):
     img = frame.to_ndarray(format="bgr24")
     with lock:
@@ -332,16 +335,8 @@ with tab2:
         placeholder = st.empty()
         with placeholder.container():
             st.caption("Press 'Start' to record a small video, before clicking on 'Generate Recommendations'")
-            # st.write('Recommended Tracks')
-            # container(genreBasedTracks(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/track/')
-            # st.write('Recommended Albums')
-            # container(genreBasedAlbums(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/album/')
-            # st.write('Recommended Artists')
-            # container(genreBasedArtists(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/artist/') 
-            
+
     with col1: 
-        lock = threading.Lock()
-        img_container = {"img": None}
         ctx = webrtc_streamer(key="example", video_frame_callback=video_frame_callback)
         cap = st.button('Generate Recommendation', use_container_width=True)
 
