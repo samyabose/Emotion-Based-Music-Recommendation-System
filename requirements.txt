@@ -9,6 +9,7 @@ streamlit
 scikit-learn
 streamlit-chat
 ydata_profiling
+streamlit-webrtc
 tensorflow==2.10.0
 opencv-python-headless
 streamlit_pandas_profiling
