@@ -372,7 +372,8 @@ with tab3:
         placeholder = st.empty()
             
     with col1: 
-        ctx = webrtc_streamer(key="example", video_frame_callback=video_frame_callback, media_stream_constraints={"video":True, "audio":False})
+        ctx = webrtc_streamer(key="example", video_frame_callback=video_frame_callback, media_stream_constraints={"video":True, "audio":False}, rtc_configuration={"iceServers": [{"urls":["stun:stun.l.google.com:19302"]}]})
+        # ctx = webrtc_streamer(key="example", video_frame_callback=video_frame_callback, media_stream_constraints={"video":True, "audio":False})
         col3, col4 = st.columns(2)
         with col3:
             cap = st.button('Recommend', use_container_width=True)
