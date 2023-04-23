@@ -25,7 +25,7 @@ st.sidebar.markdown(
                 <h2 style="color: rgb(224, 224, 224); position: absolute; z-index: 2; top: 15px; left: 80px; font-family: sans-serif;">Emotion Based Music Recommendation System</h1>
             </div>
             <div style="margin-top: 40px">
-                <a href="https://github.com/samya-ravenXI/Movie-Recommendation-System" style="position: absolute; z-index: 2; top: 131px; left: 15px">
+                <a href="https://github.com/samya-ravenXI/Emotion-Based-Music-Recommendation-System" style="position: absolute; z-index: 2; top: 131px; left: 15px">
                     <img src="https://img.shields.io/badge/github-repo-white" alt="repo"/>
                 </a>
                 <a href="https://colab.research.google.com/drive/1ahxyp8i9Ngy2nyA5THSOwDzVS99prLMF?usp=sharing" style="position: absolute; z-index: 2; top: 131px; right: 92px">
