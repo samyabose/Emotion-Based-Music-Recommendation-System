@@ -4,6 +4,7 @@ import io
 import os
 import cv2
 import nltk
+import random
 import pickle
 import librosa
 import requests
@@ -13,8 +14,8 @@ import pandas as pd
 from io import BytesIO
 import streamlit as st
 import soundfile as sf
+from statistics import mode
 from nltk.corpus import stopwords
-from streamlit_chat import message
 from streamlit_webrtc import webrtc_streamer
 import streamlit.components.v1 as components
 
@@ -48,6 +49,12 @@ def load_text(filename):
     df = pd.read_csv(filename, names=['Text', 'Emotion'], sep=';')
     return df
 
+
+import sys
+
+sys.path.append( './data/text_based/st-chat-main/streamlit_chat' )
+from __init__ import message
+
 # Might also import the data from '1_Explore.py' using importlib
 albums = load_data('./data/albums.csv')
 artists = load_data('./data/artists.csv')
@@ -55,10 +62,11 @@ filteredtracks = load_scraped_data('./data/filteredtracks.csv')
  
 st.sidebar.header("Recommendation")
 st.sidebar.info("Recommendation page lets you ask for Text Based, Video Based or Audio Based recommendations.")
+st.sidebar.caption("In case of any error, simply refresh the page once.")
 
 st.header('Recommendation')
 
-tab1, tab2, tab3 = st.tabs(['Text Based', 'Video Based', 'Audio Based'])
+tab1, tab2, tab3 = st.tabs(['Text Based', 'Audio Based', 'Video Based'])
 
 def mov(res, ind, dir):
 
@@ -188,13 +196,23 @@ nltk.download('wordnet')
 nltk.download('stopwords')
 stop_words = set(stopwords.words("english"))
 
-lock = threading.Lock()
-img_container = {"img": None}
-
 def video_frame_callback(frame):
     img = frame.to_ndarray(format="bgr24")
-    with lock:
-        img_container["img"] = img
+    height, width , channel = img.shape
+    gray_image= cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    faces = face_haar_cascade.detectMultiScale(gray_image)
+    for (x,y, w, h) in faces:
+        roi_gray = gray_image[y-5:y+h+5,x-5:x+w+5]
+        roi_gray=cv2.resize(roi_gray,(48,48))
+        image_pixels = img_to_array(roi_gray)
+        image_pixels = np.expand_dims(image_pixels, axis = 0)
+        image_pixels /= 255
+        predictions = model.predict(image_pixels)
+        max_index = np.argmax(predictions[0])
+        emotion_detection = ('angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral')
+        emotion_prediction = emotion_detection[max_index]
+        with open("./data/video_based/input.txt", "a+") as output:
+            output.write(emotion_prediction + ' ')
     return frame
 
 
@@ -267,8 +285,7 @@ with tab1:
     text_based = load_model('./data/text_based/text_based.h5', compile=False)
     text_based.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
 
-    # API_KEY = st.secrets["API_KEY"]
-    API_KEY = "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"
+    API_KEY = st.secrets["API_KEY"]
 
     API_URL = "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill"
     headers = {"Authorization": "Bearer {}".format(API_KEY)}
@@ -279,13 +296,43 @@ with tab1:
     if 'past' not in st.session_state:
         st.session_state['past'] = []
 
+    if 'bot' not in st.session_state:
+        st.session_state['bot'] = random.randint(1, 100)
+
+    if 'user' not in st.session_state:
+        st.session_state['user'] = random.randint(1, 100)
+
     def query(payload):
         response = requests.post(API_URL, headers=headers, json=payload)
         return response.json()
 
     def get_text():
-        input_text = st.text_input("Enter some text:", "Hey!")
+        input_text = st.text_input("Enter some text:", "Hey! How you doin'?")
         return input_text 
+
+    def gen(): 
+        if st.session_state['generated']:
+            with chatholder.container():
+                for i in range(len(st.session_state['generated'])-1, -1, -1):
+                    message(st.session_state["generated"][i], avatar_style="lorelei", seed=st.session_state['bot'], key=str(i))
+                    message(st.session_state['past'][i], avatar_style="lorelei", seed=st.session_state['user'], flip='true', is_user=True, key=str(i) + '_user')
+
+                    sentence = normalized_sentence(st.session_state['past'][i])
+                    sentence = tokenizer.texts_to_sequences([sentence])
+                    sentence = pad_sequences(sentence, maxlen=229, truncating='pre')
+                    result = le.inverse_transform(np.argmax(text_based.predict(sentence), axis=-1))[0]
+                    prob =  np.max(text_based.predict(sentence))
+
+                    # st.caption(f"Mood:{result}; Probability: {prob}; Genres: {', '.join(moodToGenre[result])}")
+
+            with placeholder.container():
+                st.write('Recommended Tracks')
+                container(genreBasedTracks(moodToGenre[result], 3), 'https://open.spotify.com/embed/track/')
+                st.write('Recommended Albums')
+                container(genreBasedAlbums(moodToGenre[result], 3), 'https://open.spotify.com/embed/album/')
+                st.write('Recommended Artists')
+                container(genreBasedArtists(moodToGenre[result], 3), 'https://open.spotify.com/embed/artist/')
+
     col1, col2 = st.columns((1.5,2.5))
     with col1:
         user_input = get_text()
@@ -306,66 +353,47 @@ with tab1:
             st.session_state['past'] = st.session_state['past'][1:]
         st.session_state.past.append(user_input)
         st.session_state.generated.append(output["generated_text"])
-            
-    if st.session_state['generated']:
-            with chatholder.container():
-                for i in range(len(st.session_state['generated'])-1, -1, -1):
-                    message(st.session_state["generated"][i], avatar_style="shapes", key=str(i))
-                    message(st.session_state['past'][i], avatar_style="lorelei-neutral", is_user=True, key=str(i) + '_user')
 
-                    sentence = normalized_sentence(st.session_state['past'][i])
-                    sentence = tokenizer.texts_to_sequences([sentence])
-                    sentence = pad_sequences(sentence, maxlen=229, truncating='pre')
-                    result = le.inverse_transform(np.argmax(text_based.predict(sentence), axis=-1))[0]
-                    prob =  np.max(text_based.predict(sentence))
+    if len(st.session_state['past'])>1:
+        if st.session_state['past'][0] != st.session_state['past'][1]:
+            gen()
+        else:
+            st.session_state['generated'] = st.session_state['generated'][1:]
+            st.session_state['past'] = st.session_state['past'][1:]
+            gen()
+    else:
+        gen()
 
-                    # st.caption(f"Mood:{result}; Probability: {prob}; Genres: {', '.join(moodToGenre[result])}")
+with tab3:
 
-            with placeholder.container():
-                st.write('Recommended Tracks')
-                container(genreBasedTracks(moodToGenre[result], 3), 'https://open.spotify.com/embed/track/')
-                st.write('Recommended Albums')
-                container(genreBasedAlbums(moodToGenre[result], 3), 'https://open.spotify.com/embed/album/')
-                st.write('Recommended Artists')
-                container(genreBasedArtists(moodToGenre[result], 3), 'https://open.spotify.com/embed/artist/')
-
-with tab2:
     st.subheader('Video Based Recommendation') 
     col1, col2 = st.columns((1.5,2.5))
     with col2:
         placeholder = st.empty()
-        with placeholder.container():
-            st.caption("Press 'Start' to record a small video, before clicking on 'Generate Recommendations'")
-
+            
     with col1: 
-        ctx = webrtc_streamer(key="example", video_frame_callback=video_frame_callback)
-        cap = st.button('Generate Recommendation', use_container_width=True)
+        ctx = webrtc_streamer(key="example", video_frame_callback=video_frame_callback, media_stream_constraints={"video":True, "audio":False})
+        col3, col4 = st.columns(2)
+        with col3:
+            cap = st.button('Recommend', use_container_width=True)
+        with col4:
+            reset = st.button('Reset', use_container_width=True)
+        st.error("Press 'Recommend' once the video is recorded to refresh the recommendations specific to the predicted emotion.")
 
-        while ctx.state.playing:
-            with lock:
-                img = img_container["img"]
-            if img is None:
-                continue
-            cv2.imwrite('./data/video_based/input.png', img)
-            break
+        # if not ctx.state.playing:
+        with placeholder.container():
+            st.write('Popular Tracks')
+            container(genreBasedTracks(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/track/')
+            st.write('Popular Albums')
+            container(genreBasedAlbums(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/album/')
+            st.write('Popular Artists')
+            container(genreBasedArtists(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/artist/') 
 
         if cap:
-            try:
-                img = cv2.imread('./data/video_based/input.png')
-                height, width , channel = img.shape
-                gray_image= cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                faces = face_haar_cascade.detectMultiScale(gray_image)
-                for (x,y, w, h) in faces:
-                    roi_gray = gray_image[y-5:y+h+5,x-5:x+w+5]
-                    roi_gray=cv2.resize(roi_gray,(48,48))
-                    image_pixels = img_to_array(roi_gray)
-                    image_pixels = np.expand_dims(image_pixels, axis = 0)
-                    image_pixels /= 255
-                    predictions = model.predict(image_pixels)
-                    max_index = np.argmax(predictions[0])
-                    emotion_detection = ('angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral')
-                    emotion_prediction = emotion_detection[max_index]
-                    with placeholder.container():
+            with open("./data/video_based/input.txt", "r+") as output:
+                pred = output.read()
+                emotion_prediction = mode(pred.split(' '))
+                with placeholder.container():
                         # st.write('Predicted Emotion: ' + emotion_prediction)
                         st.write('Recommended Tracks')
                         container(genreBasedTracks(moodToGenre[emotion_prediction], 3), 'https://open.spotify.com/embed/track/')
@@ -373,26 +401,21 @@ with tab2:
                         container(genreBasedAlbums(moodToGenre[emotion_prediction], 3), 'https://open.spotify.com/embed/album/')
                         st.write('Recommended Artists')
                         container(genreBasedArtists(moodToGenre[emotion_prediction], 3), 'https://open.spotify.com/embed/artist/') 
-            except:  
-                with placeholder.container():
-                    st.write('Recommended Tracks')
-                    container(genreBasedTracks(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/track/')
-                    st.write('Recommended Albums')
-                    container(genreBasedAlbums(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/album/')
-                    st.write('Recommended Artists')
-                    container(genreBasedArtists(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/artist/') 
-        
-with tab3:  
+        if reset:
+            with open("./data/video_based/input.txt", "w+") as output:
+                output.write("")
+
+with tab2:  
     st.subheader('Audio Based Recommendation') 
     col1, col2 = st.columns((1.5,2.5))
     with col2:
         placeholder = st.empty()
         with placeholder.container():
-            st.write('Recommended Tracks')
+            st.write('Popular Tracks')
             container(genreBasedTracks(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/track/')
-            st.write('Recommended Albums')
+            st.write('Popular Albums')
             container(genreBasedAlbums(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/album/')
-            st.write('Recommended Artists')
+            st.write('Popular Artists')
             container(genreBasedArtists(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/artist/') 
     with col1:
         wav_audio_data = st_audiorec()
