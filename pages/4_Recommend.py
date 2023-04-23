@@ -285,8 +285,8 @@ with tab1:
     text_based = load_model('./data/text_based/text_based.h5', compile=False)
     text_based.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
 
-    API_KEY = st.secrets["API_KEY"]
-
+    # API_KEY = st.secrets["API_KEY"]
+    
     API_URL = "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill"
     headers = {"Authorization": "Bearer {}".format(API_KEY)}
 
@@ -372,7 +372,7 @@ with tab3:
         placeholder = st.empty()
             
     with col1: 
-        ctx = webrtc_streamer(key="example", video_frame_callback=video_frame_callback, media_stream_constraints={"video":True, "audio":False}, rtc_configuration={"iceServers": [{"urls":["stun:stun.l.google.com:19302"]}]})
+        ctx = webrtc_streamer(key="example", video_frame_callback=video_frame_callback, media_stream_constraints={"video":True, "audio":False}, rtc_configuration= {"iceServers": [{"urls":"stun:a.relay.metered.ca:80"},{"urls":"turn:a.relay.metered.ca:80","username":"21804ddb87e66db5313215b0","credential":"51W/FKY9iiCx1tCo"},{"urls":"turn:a.relay.metered.ca:80?transport=tcp","username":"21804ddb87e66db5313215b0","credential":"51W/FKY9iiCx1tCo"},{"urls":"turn:a.relay.metered.ca:443","username":"21804ddb87e66db5313215b0","credential":"51W/FKY9iiCx1tCo"},{"urls":"turn:a.relay.metered.ca:443?transport=tcp","username":"21804ddb87e66db5313215b0","credential":"51W/FKY9iiCx1tCo"}]})
         # ctx = webrtc_streamer(key="example", video_frame_callback=video_frame_callback, media_stream_constraints={"video":True, "audio":False})
         col3, col4 = st.columns(2)
         with col3:
@@ -391,17 +391,27 @@ with tab3:
             container(genreBasedArtists(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/artist/') 
 
         if cap:
-            with open("./data/video_based/input.txt", "r+") as output:
-                pred = output.read()
-                emotion_prediction = mode(pred.split(' '))
+            try:
+                with open("./data/video_based/input.txt", "r+") as output:
+                    pred = output.read()
+                    emotion_prediction = mode(pred.split(' '))
+                    with placeholder.container():
+                            # st.write('Predicted Emotion: ' + emotion_prediction)
+                            st.write('Recommended Tracks')
+                            container(genreBasedTracks(moodToGenre[emotion_prediction], 3), 'https://open.spotify.com/embed/track/')
+                            st.write('Recommended Albums')
+                            container(genreBasedAlbums(moodToGenre[emotion_prediction], 3), 'https://open.spotify.com/embed/album/')
+                            st.write('Recommended Artists')
+                            container(genreBasedArtists(moodToGenre[emotion_prediction], 3), 'https://open.spotify.com/embed/artist/') 
+            except:
                 with placeholder.container():
-                        # st.write('Predicted Emotion: ' + emotion_prediction)
-                        st.write('Recommended Tracks')
-                        container(genreBasedTracks(moodToGenre[emotion_prediction], 3), 'https://open.spotify.com/embed/track/')
-                        st.write('Recommended Albums')
-                        container(genreBasedAlbums(moodToGenre[emotion_prediction], 3), 'https://open.spotify.com/embed/album/')
-                        st.write('Recommended Artists')
-                        container(genreBasedArtists(moodToGenre[emotion_prediction], 3), 'https://open.spotify.com/embed/artist/') 
+                    st.write('Popular Tracks')
+                    container(genreBasedTracks(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/track/')
+                    st.write('Popular Albums')
+                    container(genreBasedAlbums(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/album/')
+                    st.write('Popular Artists')
+                    container(genreBasedArtists(['pop', 'hip hop', 'rock', 'folk', 'country', 'r&b'], 3), 'https://open.spotify.com/embed/artist/') 
+
         if reset:
             with open("./data/video_based/input.txt", "w+") as output:
                 output.write("")
