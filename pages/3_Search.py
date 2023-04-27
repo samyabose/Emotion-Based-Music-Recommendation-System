@@ -276,12 +276,23 @@ with tab3:
         db = pd.DataFrame({'uri':uris}).sample(n=n)
         return db
 
-    st.subheader('Recommended ' + gen.capitalize() + ' Tracks')
-    test_feat = [acousticness, danceability, energy, instrumentalness, valence, tempo]
-    db = n_neighbors_uri_audio(gen, start_year, end_year, test_feat)
-    container(db.head(5), 'https://open.spotify.com/embed/track/')
-    container(db.head(10).tail(5), 'https://open.spotify.com/embed/track/')
-    container(db.head(15).tail(5), 'https://open.spotify.com/embed/track/')
+    st.markdown('---')
+
+    try:
+        test_feat = [acousticness, danceability, energy, instrumentalness, valence, tempo]
+        db = n_neighbors_uri_audio(gen, start_year, end_year, test_feat)
+        st.subheader('Recommended ' + gen.capitalize() + ' Tracks')
+        container(db.head(5), 'https://open.spotify.com/embed/track/')
+        container(db.head(10).tail(5), 'https://open.spotify.com/embed/track/')
+        container(db.head(15).tail(5), 'https://open.spotify.com/embed/track/')
+    except:
+        st.error("Couldn't find results fitting the given criteria! Here are a few popular songs of that genre!")
+        st.subheader('Popular ' + gen.capitalize() + ' Tracks')
+        container(genreBasedTracks([gen], 5), 'https://open.spotify.com/embed/track/')
+        st.subheader('Popular ' + gen.capitalize() + ' Albums')
+        container(genreBasedAlbums([gen], 5), 'https://open.spotify.com/embed/album/')
+        st.subheader('Popular ' + gen.capitalize() + ' Artists')
+        container(genreBasedArtists([gen], 5), 'https://open.spotify.com/embed/artist/')
 
 with tab4:
     col1, col2 = st.columns(2)
